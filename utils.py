@@ -4,25 +4,6 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from matplotlib.dates import DateFormatter
 
-def import_modules():
-    global pd, np, plt, datetime, timedelta, gc, signal, glob, os
-    import pandas as pd
-    import numpy as np
-    import gc
-    import signal
-    import glob
-    import os
-
-def clear_globals():
-    """Очистка глобальных переменных"""
-    keep_vars = ['import_modules', 'gc', 'columns', 'path_to_dir', 'clear_globals']
-    for var in list(globals().keys()):
-        if var not in keep_vars:
-            del globals()[var]
-
-    import_modules()
-    pd.set_option('display.max_columns', None)
-
 def common_data_preparation(df):
     df['ServerTimestamp [datatime, us]'] = pd.to_datetime(df['ServerTimestamp [datatime, us]'])
 
@@ -34,7 +15,7 @@ def common_data_preparation(df):
 
 def Frequency_data_preparation(Frequency_data, time):
     Frequency_data = Frequency_data[(Frequency_data.Mdtype == 0) | (Frequency_data.Mdtype == 2)]
-    Frequency_data = Frequency_data['ServerTimestamp [datatime, us]']
+    Frequency_data = Frequency_data[['ServerTimestamp [datatime, us]', 'Stream ']]
     Frequency_data = Frequency_data.sort_values(by='ServerTimestamp [datatime, us]')
     Frequency_data.loc[:, 'TimeDiff'] = Frequency_data['ServerTimestamp [datatime, us]'].diff().dt.total_seconds()
     Frequency_data = Frequency_data[['ServerTimestamp [datatime, us]', 'TimeDiff']]
@@ -65,7 +46,7 @@ def frequency_plot(Frequency_data, time):
     frequency.index = pd.to_datetime(frequency.index.map(lambda x: f'{x[0]:02d}:{x[1]:02d}:{x[2]:02d}'), format='%H:%M:%S')
 
     # Generate the tick positions
-    tick_positions = create_time_range(start_str='18:40:00', end_str='18:40:00', interval=20)
+    tick_positions = create_time_range(start_time='10:00:00', end_time='18:40:00', interval_minutes=20)
 
     # Plotting the frequency
     plt.figure(figsize=(15, 5))
@@ -173,7 +154,7 @@ def statistics_and_probs(df, time):
     # Группировка по TradeID и вычисление суммарного объема (Qty)
     trade_sizes = df.groupby('TradeID')['Qty'].sum()
 
-    mean_qty, stddev_qty, median_qty = statistics(trade_sizes)
+    mean_qty, stddev_qty, median_qty = statistics(trade_sizes, time)
 
     prob_mean = calculate_probabilities(df, trade_sizes, mean_qty)
     prob_median = calculate_probabilities(df, trade_sizes, median_qty)
@@ -183,3 +164,12 @@ def statistics_and_probs(df, time):
     print(f"Probability(Qty >= mean): {prob_mean:.4f}")
     print(f"Probability(Qty >= median): {prob_median:.4f}")
     print(f"Probability(Qty >= mean + stddev): {prob_mean_plus_stddev:.4f}")
+
+def first_task(df, time):
+    Frequency_data = Frequency_data_preparation(df, time)
+    frequency_plot(Frequency_data, time)
+    distance_plot(Frequency_data, time)
+
+def second_task(df, time):
+    trades_data = trades(df, time)
+    statistics_and_probs(trades_data, time)
