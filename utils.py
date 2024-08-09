@@ -13,7 +13,7 @@ def common_data_preparation(df):
             (df['ServerTimestamp [datatime, us]'].dt.time <= end_time)]
     return df
 
-def Frequency_data_preparation(Frequency_data, time):
+def Frequency_data_preparation(Frequency_data, time, path):
     Frequency_data = Frequency_data[(Frequency_data.Mdtype == 0) | (Frequency_data.Mdtype == 2)]
     Frequency_data = Frequency_data[['ServerTimestamp [datatime, us]', 'Stream ']]
     Frequency_data = Frequency_data.sort_values(by='ServerTimestamp [datatime, us]')
@@ -25,7 +25,7 @@ def Frequency_data_preparation(Frequency_data, time):
     Frequency_data['Minute'] = Frequency_data['ServerTimestamp [datatime, us]'].dt.minute
     Frequency_data['Second'] = Frequency_data['ServerTimestamp [datatime, us]'].dt.second
 
-    Frequency_data.to_csv(f'Frequency_data_{time}.csv.gz', compression='gzip', index = False)
+    Frequency_data.to_csv(f'{path}Frequency_data_{time}.csv', index = False)
     return Frequency_data
 
 def create_time_range(start_time, end_time, interval_minutes):
@@ -91,7 +91,7 @@ def distance_plot(Frequency_data, time):
     plt.tight_layout()
     plt.show()
 
-def trades(df, time):
+def trades(df, time, path):
     df = df[df.Mdtype == 1]
     df['[price;qty;nborders] ask 3'] = df['[price;qty;nborders] ask 3'].astype(int)
 
@@ -106,7 +106,7 @@ def trades(df, time):
 
     df['Qty'] = df['[price;qty;nborders] ask 0'].apply(lambda x: float(x))
 
-    df.to_csv(f'Trades_{time}.csv.gz', compression='gzip', index = False)
+    df.to_csv(f'{path}Trades_{time}.csv', index = False)
     return df
 
 def statistics(trade_sizes, time):
@@ -165,11 +165,11 @@ def statistics_and_probs(df, time):
     print(f"Probability(Qty >= median): {prob_median:.4f}")
     print(f"Probability(Qty >= mean + stddev): {prob_mean_plus_stddev:.4f}")
 
-def first_task(df, time):
-    Frequency_data = Frequency_data_preparation(df, time)
+def first_task(df, time, path):
+    Frequency_data = Frequency_data_preparation(df, time, path)
     frequency_plot(Frequency_data, time)
     distance_plot(Frequency_data, time)
 
-def second_task(df, time):
-    trades_data = trades(df, time)
+def second_task(df, time, path):
+    trades_data = trades(df, time, path)
     statistics_and_probs(trades_data, time)
